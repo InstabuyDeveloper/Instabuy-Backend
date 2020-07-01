@@ -1,0 +1,4 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://dbUser:proyectoarsw@cluster0-cfynh.mongodb.net/Cluster0?retryWrites=true&w=majority
