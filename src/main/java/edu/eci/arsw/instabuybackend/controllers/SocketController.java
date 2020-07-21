@@ -2,11 +2,13 @@ package edu.eci.arsw.instabuybackend.controllers;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import edu.eci.arsw.instabuybackend.model.Producto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import com.google.gson.Gson;
 
 import edu.eci.arsw.instabuybackend.model.Sala;
 
@@ -18,76 +20,88 @@ public class SocketController {
 
     private ConcurrentHashMap<String, Sala> salas = new ConcurrentHashMap<>();
 
-    @MessageMapping("/createsala.{nombre}")
-    public void createSalasEvent(String cuentaF, @DestinationVariable String nombre) throws Exception {
-        if (!salas.containsKey(nombre)) {
-            String[] datos = cuentaF.split(";");
-            String product = datos[0];
-            String name = datos[1];
+    // crear sala
+    @MessageMapping("/createsala.{nombreSala}")
+    public void createSalasEvent(String datos, @DestinationVariable String nombreSala) throws Exception {
+        if (!salas.containsKey(nombreSala)) {
+            String[] informacion = datos.split(";");
 
-            Sala sala = new Sala(product, nombre);
-            sala.addUser(name);
-            salas.put(nombre, sala);
+            String creador = informacion[0];
+            String product = informacion[1];
+
+            Gson g = new Gson();
+            Producto prouctoObj = g.fromJson(product, Producto.class);
+
+            Sala sala = new Sala(prouctoObj, nombreSala, creador);
+            salas.put(nombreSala, sala);
 
         }
 
-        msgt.convertAndSend("/topic/joinsala." + nombre, salas.get(nombre));
+        msgt.convertAndSend("/topic/joinsala." + nombreSala, salas.get(nombreSala));
         msgt.convertAndSend("/topic/showsala", salas.values());
     }
 
     // para unirse
-    @MessageMapping("/joinsala.{nombre}")
-    public void joinSalasEvent(String cuentaF, @DestinationVariable String nombre) {
-        /*
-         * String[] datos = cuentaF.split(";"); Long id = Long.valueOf(datos[0]); String
-         * correo = datos[1]; String contrasena = datos[2];
-         */
-        String nick = cuentaF;
-        // Cuenta cuenta = new Cuenta(id, correo, contrasena, nick);
-        Sala temp = salas.get(nombre);
+    @MessageMapping("/joinsala.{nombreSala}")
+    public void joinSalasEvent(String nameUser, @DestinationVariable String nombreSala) {
+        String nick = nameUser;
+        Sala temp = salas.get(nombreSala);
         temp.addUser(nick);
-        msgt.convertAndSend("/topic/joinsala." + nombre, salas.get(nombre).nameMembers());
-        msgt.convertAndSend("/topic/showsala", salas.values());
+        msgt.convertAndSend("/topic/joinsala." + nombreSala, salas.get(nombreSala).nameMembers());
     }
 
     // cuando ya esta unido
-    @MessageMapping("/sala.{nombre}")
-    public void joinSalasEvent(@DestinationVariable String nombre) {
-        msgt.convertAndSend("/topic/joinsala." + nombre, salas.get(nombre).nameMembers());
+    @MessageMapping("/sala.{nombreSala}")
+    public void joinSalasEvent(@DestinationVariable String nombreSala) {
+        msgt.convertAndSend("/topic/joinsala." + nombreSala, salas.get(nombreSala).nameMembers());
 
     }
 
+    // mostrar salas
     @MessageMapping("/showsala")
     public void showSalasEvent() {
         msgt.convertAndSend("/topic/showsala", salas.values());
     }
 
     // para subastar como participante
-    @MessageMapping("/salaSubasta.{nombre}")
-    public void offer(String val, @DestinationVariable String nombre) {
-        String[] values = val.split(";");
-        String name = values[0];
+    @MessageMapping("/salaSubasta.{nombreSala}")
+    public void offer(String oferta, @DestinationVariable String nombreSala) {
+        String[] values = oferta.split(";");
+        String nick = values[0];
         double amount = Double.parseDouble(values[1]);
-        salas.get(nombre).offer(name, amount);
-        msgt.convertAndSend("/topic/salaDatos." + nombre, salas.get(nombre).getDatos());
+        salas.get(nombreSala).offer(nick, amount);
+        msgt.convertAndSend("/topic/salaDatos." + nombreSala, salas.get(nombreSala).getDatos());
 
     }
 
-    @MessageMapping("/salaDatos.{nombre}")
-    public void getDatos(@DestinationVariable String nombre) {
-        if (salas.containsKey(nombre)) {
-            msgt.convertAndSend("/topic/salaDatos." + nombre, salas.get(nombre).getDatos());
+    // obtener ofertas
+    @MessageMapping("/salaDatos.{nombreSala}")
+    public void getDatos(@DestinationVariable String nombreSala) {
+        if (salas.containsKey(nombreSala)) {
+            msgt.convertAndSend("/topic/salaDatos." + nombreSala, salas.get(nombreSala).getDatos());
         }
 
     }
 
-    @MessageMapping("/finSala.{nombre}")
-    public void finSala(@DestinationVariable String nombre) {
-        if (salas.containsKey(nombre)) {
-            msgt.convertAndSend("/topic/finSala." + nombre, salas.get(nombre));
-            salas.remove(nombre);
+    // cerrar la sala
+    @MessageMapping("/finSala.{nombreSala}")
+    public void finSala(@DestinationVariable String nombreSala) {
+        if (salas.containsKey(nombreSala)) {
+            msgt.convertAndSend("/topic/finSala." + nombreSala, salas.get(nombreSala));
+            salas.remove(nombreSala);
+            msgt.convertAndSend("/topic/showsala", salas.values());
         }
 
     }
 
+    // Asignar ganador
+    @MessageMapping("/setGanador.{nombreSala}")
+    public void setGanador(String ganador, @DestinationVariable String nombreSala) {
+        if (salas.containsKey(nombreSala)) {
+            salas.get(nombreSala).setGanador(ganador);
+            msgt.convertAndSend("/topic/finSala." + nombreSala, salas.get(nombreSala));
+
+        }
+
+    }
 }

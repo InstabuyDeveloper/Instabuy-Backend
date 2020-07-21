@@ -7,8 +7,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Sala {
 
-    private String productName;
+    private Producto producto;
     private String salaName;
+    private String creador;
+    private String ganador;
+
+    public Sala() {
+    }
 
     private ConcurrentHashMap<String, Competidor> datos = new ConcurrentHashMap<>();
 
@@ -16,10 +21,10 @@ public class Sala {
         this.salaName = salaName;
     }
 
-    public Sala(String productName, String salaName) {
-        this.productName = productName;
+    public Sala(Producto producto, String salaName, String creador) {
+        this.producto = producto;
         this.salaName = salaName;
-
+        this.creador = creador;
     }
 
     public void addUser(String user) {
@@ -46,13 +51,46 @@ public class Sala {
     // user actions
 
     public void offer(String name, double amount) {
-        datos.get(name).setAmount(amount);
+        if(amount >= producto.getPrecioBase()) {
+            datos.get(name).setAmount(amount);
+        }
 
     }
 
     // owner
-    public void winner(String name) {
-
+    public void setGanador(String name) {
+        this.ganador=name;
     }
 
+    public String getGanador() {
+        return ganador;
+    }
+
+    public Producto getProducto() {
+        return producto;
+    }
+
+    public void setProducto(Producto producto) {
+        this.producto = producto;
+    }
+
+    public String getSalaName() {
+        return salaName;
+    }
+
+    public void setSalaName(String salaName) {
+        this.salaName = salaName;
+    }
+
+    public String getCreador() {
+        return creador;
+    }
+
+    public void setCreador(String creador) {
+        this.creador = creador;
+    }
+
+    public void setDatos(ConcurrentHashMap<String, Competidor> datos) {
+        this.datos = datos;
+    }
 }

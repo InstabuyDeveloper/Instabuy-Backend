@@ -4,6 +4,9 @@ public class Competidor {
     private String name;
     private double amount = 0;
 
+    public Competidor() {
+    }
+
     public Competidor(String name) {
         this.name = name;
     }
