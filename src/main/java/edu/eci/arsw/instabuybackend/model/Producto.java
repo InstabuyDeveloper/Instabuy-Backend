@@ -1,8 +1,11 @@
 package edu.eci.arsw.instabuybackend.model;
 
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.annotation.Id;
 
+@Document
 public class Producto {
-
+    @Id
     private String nombre;
     private String descripcion;
     private double precioBase;

@@ -83,13 +83,15 @@ public class SocketController {
 
     }
 
-    // cerrar la sala
+    // Cerrar la sala
     @MessageMapping("/finSala.{nombreSala}")
     public void finSala(@DestinationVariable String nombreSala) {
         if (salas.containsKey(nombreSala)) {
             msgt.convertAndSend("/topic/finSala." + nombreSala, salas.get(nombreSala));
             salas.remove(nombreSala);
             msgt.convertAndSend("/topic/showsala", salas.values());
+
+
         }
 
     }

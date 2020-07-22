@@ -1,11 +1,11 @@
 package edu.eci.arsw.instabuybackend.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
-
+import org.springframework.data.annotation.Id;
 
 @Document
 public class User {
-
+    @Id
     private String userId;
     private String userName;
     private String lastName;
